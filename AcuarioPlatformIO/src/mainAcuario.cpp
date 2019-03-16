@@ -6,7 +6,7 @@ RTC_DS1307 rtc;
 DateTime now; //Para registrar la hora actual
 int MinActual=0;
 
-const int pinModo = 2; //Pin del modo manual o automático
+const int pinModo = A0; //Pin del modo manual o automático
 int modo; //Variable del modo actual
 
 const int ledRojo = 3; //Pines PWM del arduino UNO
@@ -19,12 +19,15 @@ int ciclo_ledAzul;
 int ciclo_ledRojo;
 int ciclo_ledVioleta;
 
+long unsigned int segundo; //Variables para esperar un segundo entre mensajes del puerto Serial;
+long unsigned int prevSegundo;
+
 void setup() {
   pinMode(ledRojo, OUTPUT); /////////////////salidas  y entradas
   pinMode(ledAzul, OUTPUT);
   pinMode(ledBlanco, OUTPUT);
   pinMode(ledVioleta, OUTPUT);
-  pinMode(pinModo, INPUT);
+  pinMode(pinModo, INPUT); //Entrada del Potenciometro
 
   pinMode(A3, OUTPUT); //crea un falso VCC y GND para el rtc
   digitalWrite(A3,HIGH);
@@ -49,13 +52,18 @@ void loop (){
     Serial.println("Couldn't find RTC");
   }
 
-now=rtc.now();                                                                 //////////////INICIA CICLO ILUMINACION
-MinActual = now.hour()*60 + now.minute();                                      /////////////Convierto las horas a minutos para hacer más fácil las cuentas
+modo=analogRead(pinModo); //Lee el potenciómetro
+if(modo==0){ //MODO AUTOMÁTICO SI EL POTENCIÓMETRO ESTÁ EN 0
 
-//Descomentar esta parte para el demo
-//Simula el paso de los min aprox como si fueran segundos
-//MinActual+=now.second(); if(MinActual>1440) MinActual=0;
+   now=rtc.now(); //Actualiza la info del rtc
+   MinActual = now.hour()*60 + now.minute(); //Convierto las horas a minutos para hacer más fácil las cuentas
+}
+else { //MODO MANUAL SI EL POTENCIÓMETRO NO ESTÁ EN 0
+  MinActual=map(modo,1,1023,0,1439);
+}
 
+
+ //////////////INICIA CICLO ILUMINACION
 if ((MinActual >= 480) && (MinActual <= 509) )                                ////////////////////////// Entre las 8:00 y 8:29
   {
       ciclo_ledAzul = map(MinActual, 480, 509, 10, 0);                        //Distribuyo la transición de la luz a lo largo del bloque de tiempo
@@ -182,18 +190,22 @@ analogWrite(ledBlanco,ciclo_ledBlanco);
 analogWrite(ledAzul,ciclo_ledAzul);
 analogWrite(ledVioleta,ciclo_ledVioleta);
 
-Serial.print("HORA: ");
-Serial.println(MinActual);
-Serial.print("Ciclo Azul: ");
-Serial.println(ciclo_ledAzul);
-Serial.print("Ciclo Violeta: ");
-Serial.println(ciclo_ledVioleta);
-Serial.print("Ciclo Blanco: ");
-Serial.println(ciclo_ledBlanco);
-Serial.print("Ciclo Rojo: ");
-Serial.println(ciclo_ledRojo);
-Serial.println();
-
-delay(1000);
+segundo = millis(); //Checa los milisegundos actuales desde que se empezó el programa
+if(segundo>=(prevSegundo+1000)){ //Compara si ya pasó un segundo completo
+ if(modo==0) Serial.println("Modo Automatico");
+ else Serial.println("Modo Manual");
+ Serial.print("HORA: ");
+ Serial.println(MinActual);
+ Serial.print("Ciclo Azul: ");
+ Serial.println(ciclo_ledAzul);
+ Serial.print("Ciclo Violeta: ");
+ Serial.println(ciclo_ledVioleta);
+ Serial.print("Ciclo Blanco: ");
+ Serial.println(ciclo_ledBlanco);
+ Serial.print("Ciclo Rojo: ");
+ Serial.println(ciclo_ledRojo);
+ Serial.println();
+ prevSegundo=millis(); //Actualiza el segundo
+}
 
 }
