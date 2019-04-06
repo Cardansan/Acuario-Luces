@@ -39,7 +39,7 @@ void setup() {
   Wire.begin();
   rtc.begin();
   //USAR UNO DE ESTOS DOS COMANDOS PARA PONER EN HORA EL RTC. LUEGO COMPILAR DE NUEVO ANULANDO LA LINEA
-  //rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //Ajusta la hora a la del PC en el momento de compilar
+  rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //Ajusta la hora a la del PC en el momento de compilar
   //rtc.adjust(DateTime(2019, 2, 16, 12, 0, 55)); // Ajusta la hora a la indicada (año, mes, dia, hora, minuto, segundo)
   delay(500);
   Serial.println("Luces Iniciadas.");
